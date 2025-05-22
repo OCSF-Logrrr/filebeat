@@ -1,0 +1,10 @@
+filebeat.inputs:
+  - type: log
+    enabled: true
+    paths:
+      - /var/log/syslog
+      - /var/log/auth.log
+
+output.logstash:
+  hosts: ["Logstash IP주소:5044"]  # ❗❗ 반드시 수정하세요 ❗❗
+  ssl.enabled: false
