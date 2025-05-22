@@ -13,7 +13,9 @@ sudo dpkg -i filebeat-8.6.2-amd64.deb
 설치 후 기본 경로:
 
 - 실행 파일: /usr/bin/filebeat
+  
 - 설정 파일: /etc/filebeat/filebeat.yml
+  
 - 서비스 파일: systemctl 사용 가능
 
 ## 📝 2. filebeat.yml 설정
