@@ -45,7 +45,7 @@ sudo systemctl start filebeat
 sudo systemctl status filebeat
 ```
 ## 🧪 4. Kibana에서 데이터 확인
-- Kibana 접속 (보통 https://localhost:5601)
+- Kibana 접속 (보통 http://localhost:5601)
 
 - Discover → filebeat-* 인덱스 선택
 
