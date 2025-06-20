@@ -1,0 +1,69 @@
+filebeat.inputs:
+
+#MySQL
+- type: log
+  id: mysql
+  enabled: true
+  paths:
+    - /var/log/mysql/error.log
+    - /var/log/mysql/mysql.log
+  fields:
+    service: mysql
+    source_type: database
+    event.dataset: mysql.general
+  fields_under_root: true
+
+#MongoDB
+- type: log
+  id: mongodb
+  enabled: true
+  paths:
+    - /var/log/mongodb/mongod.log
+  fields:
+    service: mongodb
+    source_type: database
+    event.dataset: mongodb.logs
+  fields_under_root: true
+
+#Ubuntu System Logs
+- type: log
+  id: ubuntu
+  enabled: true
+  paths:
+    - /var/log/syslog
+    - /var/log/auth.log
+    - /var/log/kern.log
+    - /var/log/dmesg
+    - /var/log/dpkg.log
+    - /var/log/alternatives.log
+    - /var/log/faillog
+    - /var/log/lastlog
+    - /var/log/wtmp
+    - /var/log/btmp
+  fields:
+    service: ubuntu
+    source_type: os
+    event.dataset: ubuntu.syslog
+  fields_under_root: true
+
+# ============================= 프로세서 설정 =============================
+
+processors:
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+  - add_cloud_metadata: ~
+  - add_docker_metadata: ~
+  - add_kubernetes_metadata: ~
+
+# ============================= Kafka 출력 설정 =============================
+
+output.kafka:
+  hosts: [${IP_PORT}]
+  topic: "raw-logs"
+  partition.round_robin:
+    reachable_only: true
+  codec.json:
+    pretty: false
+  required_acks: 1
+  compression: gzip
+  max_message_bytes: 1000000
