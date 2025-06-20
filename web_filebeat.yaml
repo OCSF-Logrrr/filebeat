@@ -1,0 +1,139 @@
+filebeat.inputs:
+
+# 1. ModSecurity
+- type: log
+  id: modsecurity
+  enabled: true
+  paths:
+    - /var/log/apache2/modsec_audit.log
+  fields:
+    service: modsecurity
+    source_type: waf
+    event.dataset: modsecurity.audit
+  fields_under_root: true
+
+# 2. BIND9
+- type: log
+  id: bind9
+  enabled: true 
+  paths:
+    - /var/log/named/query.log
+    - /var/log/named/named.log
+  fields:
+    service: bind9
+    source_type: dns
+    event.dataset: bind9.dns
+  fields_under_root: true
+
+# 3. Nginx
+- type: log
+  id: nginx
+  enabled: true 
+  paths:
+    - /var/log/nginx/access.log
+    - /var/log/nginx/error.log
+  fields:
+    service: nginx
+    source_type: web_server
+    event.dataset: nginx.access
+  fields_under_root: true
+
+# 4. UFW
+- type: log
+  id: ufw
+  enabled: true 
+  paths:
+    - /var/log/ufw.log
+  fields:
+    service: ufw
+    source_type: firewall
+    event.dataset: ufw.firewall
+  fields_under_root: true
+
+# 5. Ubuntu System Logs
+- type: log
+  id: ubuntu
+  enabled: true 
+  paths:
+    - /var/log/syslog
+    - /var/log/auth.log
+    - /var/log/kern.log
+    - /var/log/dmesg
+    - /var/log/dpkg.log
+    - /var/log/alternatives.log
+    - /var/log/faillog
+    - /var/log/lastlog
+    - /var/log/wtmp
+    - /var/log/btmp
+  fields:
+    service: ubuntu
+    source_type: os
+    event.dataset: ubuntu.syslog
+  fields_under_root: true
+
+# 6. Apache
+- type: log
+  id: apache
+  enabled: true
+  paths:
+    - /var/log/apache2/access.log*
+    - /var/log/apache2/error.log*
+  fields:
+    service: apache
+    source_type: web_server
+    event.dataset: apache.access
+  fields_under_root: true
+
+# 7. PHP
+- type: log
+  id: php
+  enabled: true 
+  paths:
+    - /var/log/php/php_errors.log
+  fields:
+    service: php
+    source_type: app_server
+    event.dataset: php.errors
+  fields_under_root: true
+  multiline.pattern: '^\['
+  multiline.negate: true
+  multiline.match: after
+
+# 8. Docker
+- type: log
+  id: docker-cve-all
+  enabled: true
+  pathes:
+    - /var/lib/docker/containers/*/*.log
+  json.keys_under_root: true
+  json.add_error_key: true
+  json.message_key: log
+  fileds_under_root: true
+  fileds:
+    source_type: cve
+    service: docker
+    input_type: container
+  processors:
+    - add_docker_metadata: ~
+
+# ============================= 프로세서 설정 =============================
+
+processors:
+  - add_host_metadata:
+      when.not.contains.tags: forwarded
+  - add_cloud_metadata: ~
+  - add_docker_metadata: ~
+  - add_kubernetes_metadata: ~
+
+# ============================= Kafka 출력 설정 =============================
+
+output.kafka:
+  hosts: [${IP_PORT}]
+  topic: "raw-logs"
+  partition.round_robin:
+    reachable_only: true
+  codec.json:
+    pretty: false
+  required_acks: 1
+  compression: gzip
+  max_message_bytes: 1000000
